@@ -43,4 +43,5 @@ public class CFile extends File {
         String lockState = isLocked() ? "(locked)" : "(unlocked)";
         return toPath().toAbsolutePath() + " " + lockState;
     }
+
 }

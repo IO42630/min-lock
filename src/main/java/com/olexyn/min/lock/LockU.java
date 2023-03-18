@@ -1,11 +1,10 @@
 package com.olexyn.min.lock;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.nio.channels.FileChannel;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import com.olexyn.min.log.LogU;
 
@@ -13,40 +12,35 @@ import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
 
-public final class LockUtil {
+public final class LockU {
 
     private static final int DEFAULT_LOCK_TRIES = 4;
     private static final long SLEEP_DURATION = 1000;
 
-    private LockUtil() {
+    private LockU() {
     }
 
-    public static CFile newFile(Path filePath) {
+    public static Optional<CFile> newFile(Path filePath) {
         try {
             var fc = FileChannel.open(filePath, CREATE_NEW, WRITE);
-            return new CFile(filePath, fc, false);
+            return Optional.of(new CFile(filePath, fc, false));
         } catch (IOException | OverlappingFileLockException e) {
-            var writer = new PrintWriter(new StringWriter());
-            e.printStackTrace(writer);
-            writer.flush();
             LogU.warnPlain("Could not NEW %s", filePath, e.getMessage());
-            LogU.warnPlain(writer.toString());
-            e.printStackTrace();
-            return new CFile(filePath, null, false);
+            return Optional.empty();
         }
     }
 
-    public static CFile lockFile(Path filePath) {
+    public static Optional<CFile> lockFile(Path filePath) {
         return lockFile(filePath, DEFAULT_LOCK_TRIES);
     }
 
-    public static CFile lockFile(Path filePath, int tryCount) {
+    public static Optional<CFile> lockFile(Path filePath, int tryCount) {
         try {
             var fc = FileChannel.open(filePath, READ, WRITE);
             if (filePath.toFile().exists()) {
                 fc.lock();
             }
-            return new CFile(filePath, fc, true);
+            return Optional.of(new CFile(filePath, fc, true));
         } catch (IOException | OverlappingFileLockException e) {
             if (tryCount > 0) {
                 tryCount--;
@@ -58,7 +52,7 @@ public final class LockUtil {
                 return lockFile(filePath, tryCount);
             }
             LogU.warnPlain("Could not lock %s\n%s", filePath, e.getMessage());
-            return new CFile(filePath, null, false);
+            return Optional.empty();
         }
     }
 
