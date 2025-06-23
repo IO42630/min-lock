@@ -9,19 +9,20 @@ import java.util.List;
 import java.util.Map;
 
 import com.olexyn.min.log.LogU;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 public class LockKeeper {
 
-    private static final int TRY_COUNT = 4;
 
-    private final static Map<Path, FcState> LOCKS = new HashMap<>();
+    private static final Map<Path, FcState> LOCKS = new HashMap<>();
 
     public static boolean lockDir(Path dirPath) {
         List<FcState> fcStates;
         try {
             fcStates = Files.walk(dirPath)
                 .filter(filePath -> filePath.toFile().isFile())
-                .map(filePath -> LockUtil.lockFile(filePath, TRY_COUNT))
+                .map(LockUtil::lock)
                 .toList();
         } catch (IOException e) {
             return false;
@@ -36,19 +37,19 @@ public class LockKeeper {
     public static void unlockAll() {
         LogU.infoPlain("UNLOCKING ALL.");
             LOCKS.values().forEach(
-                fcState -> LockUtil.unlockFile(fcState.getPath(), fcState.getFc(), 4)
+                fcState -> LockUtil.unlock(fcState.getPath(), fcState.getFc())
             );
     }
 
     public static FileChannel getFc(Path path) {
         var fcState = LOCKS.get(path);
-        if (fcState != null && fcState.getFc() != null && fcState.getFc().isOpen()) {
+        if (fcState != null && fcState.getFc().isOpen()) {
             return fcState.getFc();
         }
         if (!path.toFile().exists()) {
-            fcState = LockUtil.newFile(path);
+            fcState = FcState.from(path);
         } else {
-            fcState = LockUtil.lockFile(path);
+            fcState = LockUtil.lock(path);
         }
         LOCKS.put(path, fcState);
         return fcState.getFc();
