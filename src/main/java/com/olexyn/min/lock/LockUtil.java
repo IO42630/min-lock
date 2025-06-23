@@ -29,8 +29,9 @@ public class LockUtil {
         return lock(fcState);
     }
 
-    public static void unlock(FcState fcState) {
+    public static FcState unlock(FcState fcState) {
         unlock(fcState.getFc());
+        return FcState.from(fcState.getPath());
     }
 
     public static void unlock(FileChannel fc) {
