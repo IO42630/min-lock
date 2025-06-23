@@ -37,7 +37,7 @@ public class LockKeeper {
     public static void unlockAll() {
         LogU.infoPlain("UNLOCKING ALL.");
             LOCKS.values().forEach(
-                fcState -> LockUtil.unlock(fcState.getPath(), fcState.getFc())
+                fcState -> LockUtil.unlock(fcState.getFc())
             );
     }
 
