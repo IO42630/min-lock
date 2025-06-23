@@ -7,6 +7,7 @@ import java.nio.file.Path;
 
 import com.olexyn.min.log.LogU;
 import lombok.experimental.UtilityClass;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 @UtilityClass
 public class LockUtil {
@@ -29,17 +30,15 @@ public class LockUtil {
         return lock(fcState);
     }
 
-    public static FcState unlock(FcState fcState) {
-        return unlock(fcState.getPath(), fcState.getFc());
+    public static void unlock(FcState fcState) {
+        unlock(fcState.getFc());
     }
 
-    public static FcState unlock(Path filePath, FileChannel fc) {
+    public static void unlock(FileChannel fc) {
         try {
             fc.close();
-            return new FcState(filePath, fc, false);
         } catch (IOException | OverlappingFileLockException e) {
             LogU.warnPlain("Could not unlock %s", fc);
-            return new FcState(filePath, fc, true);
         }
     }
 }
